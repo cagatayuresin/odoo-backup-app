@@ -42,8 +42,13 @@ htmlcov/
 .mypy_cache/
 .ruff_cache/
 
-# pip-tools
+# pip-tools (compiled files are regenerated; do not commit)
 *.txt.bak
+backend/requirements.txt
+backend/requirements-dev.txt
+
+# Test data artifacts
+backend/tests/_test_data/
 
 # Alembic
 alembic.ini.bak

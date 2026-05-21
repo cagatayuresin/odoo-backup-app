@@ -79,10 +79,20 @@ def _register_routers(application: FastAPI) -> None:
 
 
 def _mount_static(application: FastAPI) -> None:
-    """Serve the built Vue SPA from /app/app/static, falling back to 404 for missing files."""
+    """Serve the built Vue SPA from /app/app/static, falling back to index.html for SPA routing."""
     static_dir = Path(__file__).parent / "static"
 
     if static_dir.exists():
+        # Mount Vite's /assets directory at /assets so JS/CSS paths in index.html resolve correctly
+        assets_dir = static_dir / "assets"
+        if assets_dir.exists():
+            application.mount(
+                "/assets",
+                StaticFiles(directory=str(assets_dir)),
+                name="assets",
+            )
+
+        # Serve favicon and any other top-level static files
         application.mount(
             "/static",
             StaticFiles(directory=str(static_dir)),
@@ -92,7 +102,7 @@ def _mount_static(application: FastAPI) -> None:
     # Catch-all: serve index.html for all non-API routes so Vue Router can handle them
     @application.get("/{full_path:path}", response_class=HTMLResponse, include_in_schema=False)
     def spa_fallback(request: Request, full_path: str) -> HTMLResponse:
-        """Serve the SPA shell for any non-API, non-static route."""
+        """Serve the SPA shell for any non-API, non-asset route."""
         index_path = static_dir / "index.html"
         if index_path.is_file():
             return HTMLResponse(content=index_path.read_text(encoding="utf-8"))

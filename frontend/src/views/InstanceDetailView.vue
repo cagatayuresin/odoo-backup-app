@@ -162,7 +162,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
 import { RouterLink, useRouter } from "vue-router";
-import type { Instance, Job } from "@/api";
+import type { Job } from "@/api";
 import { instancesApi, jobsApi } from "@/api";
 
 const props = defineProps<{

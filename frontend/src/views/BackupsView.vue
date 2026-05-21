@@ -60,7 +60,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from "vue";
+import { onMounted, ref, watch } from "vue";
 import type { BackupRun, Instance } from "@/api";
 import { backupsApi, instancesApi } from "@/api";
 

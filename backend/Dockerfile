@@ -26,8 +26,8 @@ FROM python:3.12.4-slim-bookworm AS runtime
 # Install PostgreSQL client (pg_dump / pg_restore binaries) + curl for healthcheck
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        postgresql-client=15+248 \
-        curl=7.88.1-10+deb12u7 \
+        postgresql-client \
+        curl \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
