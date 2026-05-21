@@ -1,5 +1,10 @@
 <template>
-  <div class="ob-card ob-instance-card">
+  <div class="ob-card ob-instance-card" :class="{ 'is-running': running }">
+    <!-- Progress bar -->
+    <div v-if="running" class="ob-progress-bar">
+      <div class="ob-progress-fill" />
+    </div>
+
     <div class="ob-instance-header">
       <div class="ob-instance-name-row">
         <span class="ob-instance-name">{{ instance.name }}</span>
@@ -13,11 +18,16 @@
 
     <div class="ob-instance-url">
       <span class="ob-scheme-badge">{{ instance.parsed_scheme }}</span>
-      <span>{{ instance.parsed_host }}{{ instance.parsed_port !== defaultPort ? ':' + instance.parsed_port : '' }}</span>
+      <a :href="instance.raw_url" target="_blank" class="ob-instance-host">
+        {{ instance.parsed_host }}{{ instance.parsed_port !== defaultPort ? ':' + instance.parsed_port : '' }}
+      </a>
     </div>
 
     <div class="ob-instance-meta">
-      <span v-if="lastRun" class="ob-instance-last">
+      <span v-if="running" class="ob-running-label">
+        Backup running…
+      </span>
+      <span v-else-if="lastRun" class="ob-instance-last">
         Last run:
         <span class="ob-pill" :class="statusClass">{{ lastRun.status }}</span>
         {{ timeAgo(lastRun.started_at) }}
@@ -29,7 +39,9 @@
       <RouterLink :to="{ name: 'instance-detail', params: { id: instance.id } }" class="ob-btn-sm">
         Edit
       </RouterLink>
-      <button class="ob-btn-sm" @click="$emit('run-now')">Run now</button>
+      <button class="ob-btn-sm" :disabled="running" @click="$emit('run-now')">
+        {{ running ? 'Running…' : 'Run now' }}
+      </button>
       <RouterLink :to="{ name: 'backups', query: { instance_id: instance.id } }" class="ob-btn-sm">
         Backups
       </RouterLink>
@@ -45,6 +57,7 @@ import type { BackupRun, Instance } from "@/api";
 const props = defineProps<{
   instance: Instance;
   lastRun?: BackupRun | null;
+  running?: boolean;
 }>();
 
 defineEmits<{
@@ -69,6 +82,7 @@ const statusClass = computed(() => {
   const s = props.lastRun?.status;
   if (s === "success" || s === "verified") return "ob-pill-success";
   if (s === "failed" || s === "verify_failed") return "ob-pill-danger";
+  if (s === "running") return "ob-pill-info";
   return "ob-pill-muted";
 });
 
@@ -88,6 +102,38 @@ function timeAgo(iso: string): string {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  overflow: hidden;
+  position: relative;
+  transition: box-shadow 0.2s;
+
+  &.is-running {
+    border-color: var(--ob-accent);
+    box-shadow: 0 0 0 1px var(--ob-accent);
+  }
+}
+
+// Animated indeterminate progress bar
+.ob-progress-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: #e5f6f7;
+  overflow: hidden;
+}
+
+.ob-progress-fill {
+  height: 100%;
+  width: 40%;
+  background: var(--ob-accent);
+  border-radius: 2px;
+  animation: ob-slide 1.4s ease-in-out infinite;
+}
+
+@keyframes ob-slide {
+  0%   { transform: translateX(-150%); }
+  100% { transform: translateX(350%); }
 }
 
 .ob-instance-header {
@@ -102,16 +148,8 @@ function timeAgo(iso: string): string {
   flex-direction: column;
 }
 
-.ob-instance-name {
-  font-weight: 600;
-  font-size: 15px;
-}
-
-.ob-instance-slug {
-  font-size: 12px;
-  color: var(--ob-text-muted);
-  font-family: monospace;
-}
+.ob-instance-name { font-weight: 600; font-size: 15px; }
+.ob-instance-slug { font-size: 12px; color: var(--ob-text-muted); font-family: monospace; }
 
 .ob-instance-url {
   display: flex;
@@ -130,15 +168,27 @@ function timeAgo(iso: string): string {
   text-transform: uppercase;
 }
 
-.ob-instance-meta {
-  font-size: 13px;
+.ob-instance-host {
+  color: var(--ob-text-muted);
+  text-decoration: none;
+  &:hover { color: var(--ob-accent); text-decoration: underline; }
 }
+
+.ob-instance-meta { font-size: 13px; }
 
 .ob-instance-last {
   display: flex;
   align-items: center;
   gap: 6px;
   flex-wrap: wrap;
+}
+
+.ob-running-label {
+  color: var(--ob-accent);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .ob-text-muted { color: var(--ob-text-muted); }
@@ -161,7 +211,7 @@ function timeAgo(iso: string): string {
   text-decoration: none;
   color: var(--ob-text);
   transition: background 0.1s;
-
-  &:hover { background: var(--ob-bg); }
+  &:hover:not(:disabled) { background: var(--ob-bg); }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
 }
 </style>

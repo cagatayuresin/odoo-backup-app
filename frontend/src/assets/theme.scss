@@ -123,6 +123,16 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  transition: margin-left 0.2s ease;
+}
+
+// Desktop sidebar collapse via hamburger
+.ob-sidebar:not(.is-open) {
+  transform: translateX(-100%);
+}
+
+.ob-layout:has(.ob-sidebar:not(.is-open)) .ob-main {
+  margin-left: 0;
 }
 
 .ob-topbar {

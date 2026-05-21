@@ -12,6 +12,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from app.config import settings
 from app.core.startup import run_startup
+from app.tasks.celery_app import celery_app as _celery_app  # noqa: F401 — ensure Celery app is registered before any shared_task.delay() calls
 
 logger = logging.getLogger(__name__)
 

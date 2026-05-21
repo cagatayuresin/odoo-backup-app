@@ -126,8 +126,12 @@ def run_job_now(
     if job is None or job.instance_id != instance_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
 
-    from app.tasks.backup_tasks import run_backup_job
+    from app.tasks.celery_app import celery_app
 
-    task = run_backup_job.delay(job_id)
+    task = celery_app.send_task(
+        "app.tasks.backup_tasks.run_backup_job",
+        args=[job_id],
+        queue="backups",
+    )
     logger.info("Manual run enqueued for job %d, task_id=%s", job_id, task.id)
     return {"task_id": task.id, "detail": "Backup job enqueued"}

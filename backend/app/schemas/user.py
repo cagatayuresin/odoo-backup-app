@@ -15,6 +15,7 @@ class UserRead(BaseModel):
     must_change_password: bool
     timezone: str
     recovery_email: str | None
+    recovery_channel_id: int | None
     password_reset_enabled: bool
     created_at: datetime
     updated_at: datetime

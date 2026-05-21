@@ -41,7 +41,9 @@
 import { onMounted, ref } from "vue";
 import type { SmtpChannel } from "@/api";
 import { accountApi, channelsApi, settingsApi } from "@/api";
+import { useAuthStore } from "@/stores/auth";
 
+const auth = useAuthStore();
 const timezones = ref<string[]>([]);
 const smtpChannels = ref<SmtpChannel[]>([]);
 const form = ref({
@@ -63,7 +65,7 @@ onMounted(async () => {
     timezone: user.timezone,
     password_reset_enabled: user.password_reset_enabled,
     recovery_email: user.recovery_email ?? "",
-    recovery_channel_id: null,
+    recovery_channel_id: user.recovery_channel_id ?? null,
   };
 });
 
@@ -77,6 +79,7 @@ async function save(): Promise<void> {
       recovery_email: form.value.recovery_email || undefined,
       recovery_channel_id: form.value.recovery_channel_id ?? undefined,
     } as Parameters<typeof accountApi.update>[0]);
+    await auth.fetchMe();
     saveMsg.value = "Settings saved.";
   } catch (e: unknown) {
     saveMsg.value = `Error: ${e instanceof Error ? e.message : "Save failed"}`;

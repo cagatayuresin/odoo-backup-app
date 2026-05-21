@@ -12,6 +12,7 @@ export interface User {
   must_change_password: boolean;
   timezone: string;
   recovery_email: string | null;
+  recovery_channel_id: number | null;
   password_reset_enabled: boolean;
   created_at: string;
   updated_at: string;

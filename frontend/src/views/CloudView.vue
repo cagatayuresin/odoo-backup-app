@@ -24,8 +24,8 @@
         <label>Credentials (JSON)</label>
         <textarea v-model="credsText" rows="6" placeholder='{"access_token": "..."}' required />
         <p class="ob-hint">
-          Paste the JSON credentials for this provider. See
-          <a href="/docs/cloud-sync/" target="_blank">docs/cloud-sync</a> for setup instructions.
+          Paste the JSON credentials for this provider as a JSON object.
+          Google Drive: use OAuth token JSON. Dropbox: use access_token. OneDrive: use MSAL token JSON.
         </p>
       </div>
       <button type="submit" class="ob-btn-primary">Save Account</button>

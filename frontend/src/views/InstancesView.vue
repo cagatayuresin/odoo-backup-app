@@ -7,6 +7,10 @@
       </RouterLink>
     </div>
 
+    <p v-if="runMsg" :class="runMsg.ok ? 'ob-msg-ok' : 'ob-msg-err'" style="margin-bottom: 12px;">
+      {{ runMsg.text }}
+    </p>
+
     <div v-if="loading" class="ob-empty">Loading…</div>
     <div v-else-if="instances.length === 0" class="ob-empty">
       No instances yet. Add your first Odoo instance to get started.
@@ -17,6 +21,7 @@
         :key="inst.id"
         :instance="inst"
         :last-run="lastRunMap[inst.id] ?? null"
+        :running="runningSet.has(inst.id)"
         @run-now="runNow(inst)"
       />
     </div>
@@ -24,7 +29,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { onMounted, onUnmounted, ref } from "vue";
 import { RouterLink } from "vue-router";
 import type { BackupRun, Instance } from "@/api";
 import { backupsApi, instancesApi, jobsApi } from "@/api";
@@ -32,29 +37,50 @@ import InstanceCard from "@/components/InstanceCard.vue";
 
 const instances = ref<Instance[]>([]);
 const lastRunMap = ref<Record<number, BackupRun | null>>({});
+const runningSet = ref<Set<number>>(new Set());
 const loading = ref(true);
+const runMsg = ref<{ text: string; ok: boolean } | null>(null);
+let pollTimer: ReturnType<typeof setInterval> | null = null;
+
+async function loadData(): Promise<void> {
+  const runs = await backupsApi.list({ limit: 200 });
+  const newRunning = new Set<number>();
+  for (const inst of instances.value) {
+    const instRuns = runs.filter((r) => r.instance_id === inst.id);
+    lastRunMap.value[inst.id] = instRuns[0] ?? null;
+    if (instRuns.some((r) => r.status === "running")) newRunning.add(inst.id);
+  }
+  runningSet.value = newRunning;
+}
 
 onMounted(async () => {
   try {
     instances.value = await instancesApi.list();
-    const runs = await backupsApi.list({ limit: 200 });
-    for (const inst of instances.value) {
-      const instRuns = runs.filter((r) => r.instance_id === inst.id);
-      lastRunMap.value[inst.id] = instRuns[0] ?? null;
-    }
+    await loadData();
   } finally {
     loading.value = false;
   }
+  pollTimer = setInterval(loadData, 4000);
+});
+
+onUnmounted(() => {
+  if (pollTimer) clearInterval(pollTimer);
 });
 
 async function runNow(inst: Instance): Promise<void> {
-  const jobs = await jobsApi.list(inst.id);
-  if (jobs.length === 0) {
-    alert("No jobs configured for this instance.");
-    return;
+  runMsg.value = null;
+  try {
+    const jobs = await jobsApi.list(inst.id);
+    if (jobs.length === 0) {
+      runMsg.value = { text: `No jobs configured for "${inst.name}".`, ok: false };
+      return;
+    }
+    await jobsApi.runNow(inst.id, jobs[0].id);
+    runMsg.value = { text: `Backup job enqueued for "${inst.name}".`, ok: true };
+    runningSet.value = new Set([...runningSet.value, inst.id]);
+  } catch (e: unknown) {
+    runMsg.value = { text: e instanceof Error ? e.message : "Failed to enqueue job.", ok: false };
   }
-  await jobsApi.runNow(inst.id, jobs[0].id);
-  alert("Backup job enqueued!");
 }
 </script>
 
@@ -66,11 +92,7 @@ async function runNow(inst: Instance): Promise<void> {
   margin-bottom: 20px;
 }
 
-.ob-page-title {
-  font-size: 22px;
-  font-weight: 700;
-  margin: 0;
-}
+.ob-page-title { font-size: 22px; font-weight: 700; margin: 0; }
 
 .ob-btn-primary {
   background: var(--ob-primary);
@@ -83,7 +105,6 @@ async function runNow(inst: Instance): Promise<void> {
   text-decoration: none;
   cursor: pointer;
   transition: background 0.15s;
-
   &:hover { background: var(--ob-primary-dark); }
 }
 
@@ -99,4 +120,7 @@ async function runNow(inst: Instance): Promise<void> {
   padding: 48px 16px;
   font-size: 14px;
 }
+
+.ob-msg-ok { font-size: 13px; color: var(--ob-success); }
+.ob-msg-err { font-size: 13px; color: var(--ob-danger); }
 </style>
