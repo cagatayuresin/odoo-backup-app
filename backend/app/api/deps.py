@@ -10,6 +10,8 @@ from sqlalchemy.orm import Session
 from app.db import get_db
 from app.models.user import User
 
+__all__ = ["get_current_user", "get_db", "require_password_changed"]
+
 logger = logging.getLogger(__name__)
 
 

@@ -86,11 +86,16 @@ ignore = [
     "PLR2004", # magic value comparison — allowed in tests
     "B008",    # function call in default arg — FastAPI uses this pattern
     "UP007",   # X | Y union syntax — keep Optional for clarity in some places
+    "PLC0415", # import not at top-level — intentional in FastAPI/SQLAlchemy circular-import patterns
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["S101", "PLR2004", "S105", "S106"]
+"tests/*" = ["S101", "PLR2004", "S105", "S106", "S107", "E501"]
 "alembic/*" = ["ERA001", "F401"]
+"alembic/versions/*" = ["E501"]
+"app/services/notify/smtp.py" = ["E501"]
+"app/services/notify/telegram.py" = ["E501"]
+"app/services/cloud/onedrive.py" = ["E501"]
 
 [tool.ruff.lint.mccabe]
 max-complexity = 10
@@ -98,6 +103,8 @@ max-complexity = 10
 [tool.ruff.lint.pylint]
 max-args = 7
 max-locals = 15
+max-branches = 15
+max-returns = 8
 
 [tool.ruff.lint.isort]
 known-first-party = ["app"]
@@ -129,11 +136,10 @@ plugins = ["pydantic.mypy"]
 [[tool.mypy.overrides]]
 module = [
     "celery.*",
-    "celery_redbeat.*",
+    "redbeat.*",
     "croniter.*",
     "dropbox.*",
     "googleapiclient.*",
-    "google_auth_oauthlib.*",
     "msal.*",
     "argon2.*",
 ]
@@ -144,7 +150,12 @@ ignore_missing_imports = true
 # ---------------------------------------------------------------------------
 [tool.bandit]
 targets = ["app"]
-skips = ["B101"]   # assert — covered by ruff per-file-ignores for tests
+skips = [
+    "B101",  # assert — covered by ruff per-file-ignores for tests
+    "B404",  # subprocess import — intentional for pg_dump/alembic
+    "B603",  # subprocess without shell=True — all calls use fixed arg lists
+    "B607",  # partial path — pg_dump/psql/pg_restore expected on PATH
+]
 exclude_dirs = ["tests", "alembic"]
 
 # ---------------------------------------------------------------------------
@@ -169,3 +180,4 @@ ignore_decorators = ["@app.get", "@app.post", "@app.put", "@app.delete", "@app.p
                      "@router.get", "@router.post", "@router.put", "@router.delete", "@router.patch",
                      "@celery_app.task", "@validator", "@field_validator", "@model_validator",
                      "@event.listens_for"]
+ignore_names = ["cls", "full_path"]

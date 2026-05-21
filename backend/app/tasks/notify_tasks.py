@@ -11,7 +11,7 @@ from app.db import SessionLocal
 logger = logging.getLogger(__name__)
 
 
-@shared_task(name="app.tasks.notify_tasks.dispatch_notification")
+@shared_task(name="app.tasks.notify_tasks.dispatch_notification")  # type: ignore[untyped-decorator]
 def dispatch_notification(run_id: int) -> dict[str, object]:
     """Dispatch notifications for a finished backup run."""
     with SessionLocal() as db:

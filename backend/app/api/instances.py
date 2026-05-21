@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db, require_password_changed
-from app.core.security import decrypt_secret, encrypt_secret
+from app.core.security import encrypt_secret
 from app.core.url_parser import parse_instance_url
 from app.models.instance import Instance
 from app.models.user import User
@@ -47,7 +47,7 @@ def _apply_instance_from_schema(inst: Instance, data: InstanceCreate | InstanceU
     """Write schema fields onto the ORM object (handles encryption)."""
     update = data.model_dump(exclude_unset=True)
 
-    if "raw_url" in update and update["raw_url"]:
+    if update.get("raw_url"):
         parsed = parse_instance_url(update["raw_url"])
         inst.raw_url = update["raw_url"]
         inst.parsed_scheme = parsed.scheme
@@ -55,9 +55,17 @@ def _apply_instance_from_schema(inst: Instance, data: InstanceCreate | InstanceU
         inst.parsed_port = parsed.port
 
     scalar_fields = [
-        "name", "backup_method", "db_host", "db_port", "db_user",
-        "filestore_path", "db_selection_mode", "include_filestore",
-        "retention_mode", "retention_value", "notifications_enabled",
+        "name",
+        "backup_method",
+        "db_host",
+        "db_port",
+        "db_user",
+        "filestore_path",
+        "db_selection_mode",
+        "include_filestore",
+        "retention_mode",
+        "retention_value",
+        "notifications_enabled",
     ]
     for field in scalar_fields:
         if field in update:
@@ -100,7 +108,9 @@ def create_instance(
     try:
         parsed = parse_instance_url(body.raw_url)
     except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)
+        ) from exc
 
     slug = _ensure_unique_slug(_slugify(body.name), db)
     inst = Instance(

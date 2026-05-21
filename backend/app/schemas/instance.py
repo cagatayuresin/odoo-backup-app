@@ -41,10 +41,9 @@ class InstanceBase(BaseModel):
     @model_validator(mode="after")
     def check_pg_fields(self) -> InstanceBase:
         """Require DB credentials when backup_method is pg_dump."""
-        if self.backup_method == BackupMethod.pg_dump:
-            if not self.db_host or not self.db_user:
-                msg = "db_host and db_user are required for pg_dump backup method"
-                raise ValueError(msg)
+        if self.backup_method == BackupMethod.pg_dump and (not self.db_host or not self.db_user):
+            msg = "db_host and db_user are required for pg_dump backup method"
+            raise ValueError(msg)
         return self
 
 

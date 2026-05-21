@@ -44,7 +44,7 @@ def _verify_zip(path: Path) -> tuple[bool, str | None]:
 def _verify_pg_dump(path: Path) -> tuple[bool, str | None]:
     """Verify a custom-format pg_dump with pg_restore --list."""
     result = subprocess.run(  # noqa: S603
-        ["pg_restore", "--list", str(path)],
+        ["pg_restore", "--list", str(path)],  # noqa: S607
         capture_output=True,
         check=False,
         timeout=120,

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
@@ -12,7 +12,7 @@ from app.core.retention import (
     compute_deletions_older_than_days,
 )
 
-_NOW = datetime(2026, 5, 21, 12, 0, 0, tzinfo=timezone.utc)
+_NOW = datetime(2026, 5, 21, 12, 0, 0, tzinfo=UTC)
 
 
 def _make_runs(
@@ -21,10 +21,7 @@ def _make_runs(
     step_hours: int = 24,
 ) -> list[tuple[int, datetime]]:
     """Generate (run_id, started_at) pairs oldest-first."""
-    return [
-        (i + 1, base_dt - timedelta(hours=step_hours * (count - 1 - i)))
-        for i in range(count)
-    ]
+    return [(i + 1, base_dt - timedelta(hours=step_hours * (count - 1 - i))) for i in range(count)]
 
 
 # ─── keep_last_n ──────────────────────────────────────────────────────────────

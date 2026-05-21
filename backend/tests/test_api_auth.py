@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
 from fastapi.testclient import TestClient
 
 
@@ -17,9 +16,9 @@ def test_login_invalid_credentials(client: TestClient, db: object) -> None:
 
 def test_login_valid_credentials(client: TestClient, db: object) -> None:
     """Seeded admin user can log in with default password."""
+
     from app.core.security import hash_password
     from app.models.user import User
-    from sqlalchemy.orm import Session
 
     sess = db  # type: ignore[assignment]
     user = User(
@@ -51,9 +50,9 @@ def test_logout_clears_session(authed_client: TestClient) -> None:
 
 def test_must_change_password_blocks_access(client: TestClient, db: object) -> None:
     """A user with must_change_password=True cannot access protected endpoints."""
+
     from app.core.security import hash_password
     from app.models.user import User
-    from sqlalchemy.orm import Session
 
     sess = db  # type: ignore[assignment]
     user = User(

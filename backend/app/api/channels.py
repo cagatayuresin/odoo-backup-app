@@ -26,6 +26,7 @@ router = APIRouter(prefix="/channels", tags=["channels"])
 
 # ─── SMTP ─────────────────────────────────────────────────────────────────────
 
+
 @router.get("/smtp", response_model=list[SmtpChannelRead])
 def list_smtp(
     _: User = Depends(require_password_changed),
@@ -130,6 +131,7 @@ def test_smtp(
 
 # ─── Telegram ─────────────────────────────────────────────────────────────────
 
+
 @router.get("/telegram", response_model=list[TelegramChannelRead])
 def list_telegram(
     _: User = Depends(require_password_changed),
@@ -167,7 +169,9 @@ def get_telegram(
     """Return a single Telegram channel."""
     channel = db.get(TelegramChannel, channel_id)
     if channel is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Telegram channel not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Telegram channel not found"
+        )
     return channel
 
 
@@ -181,7 +185,9 @@ def update_telegram(
     """Partially update a Telegram channel."""
     channel = db.get(TelegramChannel, channel_id)
     if channel is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Telegram channel not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Telegram channel not found"
+        )
 
     update_data = body.model_dump(exclude_unset=True)
     if "bot_token" in update_data:
@@ -202,7 +208,9 @@ def delete_telegram(
     """Delete a Telegram channel."""
     channel = db.get(TelegramChannel, channel_id)
     if channel is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Telegram channel not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Telegram channel not found"
+        )
     db.delete(channel)
     db.commit()
 
@@ -216,7 +224,9 @@ def test_telegram(
     """Send a test Telegram message."""
     channel = db.get(TelegramChannel, channel_id)
     if channel is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Telegram channel not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Telegram channel not found"
+        )
 
     from app.services.notify.telegram import send_test_message
 

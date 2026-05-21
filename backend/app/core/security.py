@@ -58,7 +58,7 @@ def _load_or_create_fernet_key(path: Path, app_secret: str) -> Fernet:
         return Fernet(key_bytes)
 
     # Derive a key from the configured secret (fall back to random if secret is default)
-    if app_secret and app_secret != "change-me-in-production-32chars!!":
+    if app_secret and app_secret != "change-me-in-production-32chars!!":  # noqa: S105  # nosec B105
         seed = app_secret.encode()[:32].ljust(32, b"\x00")
         key_bytes = base64.urlsafe_b64encode(seed)
     else:

@@ -26,7 +26,7 @@ _STATUS_EMOJI = {
 
 def _format_backup_message(run: BackupRun) -> str:
     """Build the Telegram Markdown notification message."""
-    emoji = _STATUS_EMOJI.get(run.status, "ℹ️")
+    emoji = _STATUS_EMOJI.get(run.status, "-")
     instance_name = run.instance.name if run.instance else str(run.instance_id)
     started = run.started_at.strftime("%Y-%m-%d %H:%M UTC")
 

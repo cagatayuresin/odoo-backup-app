@@ -12,9 +12,9 @@ from sqlalchemy import engine_from_config, pool
 # Ensure the backend directory is on sys.path so app imports work
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from app.config import settings  # noqa: E402
-from app.db import Base  # noqa: E402
-import app.models  # noqa: E402, F401  — registers all ORM models
+import app.models
+from app.config import settings
+from app.db import Base
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.db_url)

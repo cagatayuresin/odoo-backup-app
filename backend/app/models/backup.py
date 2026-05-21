@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import enum
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+from enum import StrEnum
 
 from sqlalchemy import DateTime, Enum, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -12,10 +12,10 @@ from app.db import Base
 
 
 def _utcnow() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
-class BackupStatus(str, enum.Enum):
+class BackupStatus(StrEnum):
     """Overall lifecycle status of a backup run."""
 
     running = "running"
@@ -25,7 +25,7 @@ class BackupStatus(str, enum.Enum):
     verify_failed = "verify_failed"
 
 
-class VerificationStatus(str, enum.Enum):
+class VerificationStatus(StrEnum):
     """Result of the post-backup integrity check."""
 
     not_run = "not_run"
@@ -66,5 +66,5 @@ class BackupRun(Base):
     instance: Mapped[Instance] = relationship("Instance", back_populates="backup_runs")
 
 
-from app.models.instance import Instance  # noqa: E402, F401
-from app.models.job import Job  # noqa: E402, F401
+from app.models.instance import Instance  # noqa: E402
+from app.models.job import Job  # noqa: E402

@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db, require_password_changed
 from app.core.security import hash_password, verify_password
 from app.models.user import User
 from app.schemas.user import PasswordChange, UserRead, UserUpdate
-from fastapi import HTTPException, status
 
 router = APIRouter(prefix="/account", tags=["account"])
 

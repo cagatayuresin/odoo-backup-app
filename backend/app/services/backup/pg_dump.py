@@ -6,7 +6,7 @@ import logging
 import os
 import subprocess
 import tarfile
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from app.config import settings
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 def _backup_path(instance: Instance, db_name: str, include_filestore: bool) -> Path:
     """Compute the destination path for a backup file."""
-    ts = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+    ts = datetime.now(UTC).strftime("%Y%m%d-%H%M%S")
     dest_dir = settings.backups_dir / instance.slug
     dest_dir.mkdir(parents=True, exist_ok=True)
     ext = ".tar.gz" if include_filestore else ".dump"
@@ -36,7 +36,7 @@ def run(instance: Instance, db_name: str) -> BackupResult:
     db_host = instance.db_host or "localhost"
     db_port = instance.db_port or 5432
     db_user = instance.db_user or "odoo"
-    db_password = ""
+    db_password = ""  # nosec B105
     if instance.db_password_enc:
         try:
             db_password = decrypt_secret(instance.db_password_enc)
@@ -47,9 +47,7 @@ def run(instance: Instance, db_name: str) -> BackupResult:
     env = {**os.environ, "PGPASSWORD": db_password}
 
     if instance.include_filestore:
-        return _run_with_filestore(
-            instance, db_name, db_host, db_port, db_user, env, dest
-        )
+        return _run_with_filestore(instance, db_name, db_host, db_port, db_user, env, dest)
 
     return _run_dump_only(db_name, db_host, db_port, db_user, env, dest)
 
@@ -65,11 +63,16 @@ def _run_dump_only(
     """Run pg_dump and write a custom-format .dump file."""
     cmd = [
         "pg_dump",
-        "-h", db_host,
-        "-p", str(db_port),
-        "-U", db_user,
-        "-F", "c",
-        "-f", str(dest),
+        "-h",
+        db_host,
+        "-p",
+        str(db_port),
+        "-U",
+        db_user,
+        "-F",
+        "c",
+        "-f",
+        str(dest),
         db_name,
     ]
     result = subprocess.run(  # noqa: S603
@@ -89,7 +92,7 @@ def _run_dump_only(
 
     # Verify with pg_restore --list
     verify = subprocess.run(  # noqa: S603
-        ["pg_restore", "--list", str(dest)],
+        ["pg_restore", "--list", str(dest)],  # noqa: S607
         capture_output=True,
         check=False,
         timeout=120,
@@ -123,11 +126,16 @@ def _run_with_filestore(
 
         cmd = [
             "pg_dump",
-            "-h", db_host,
-            "-p", str(db_port),
-            "-U", db_user,
-            "-F", "c",
-            "-f", str(dump_path),
+            "-h",
+            db_host,
+            "-p",
+            str(db_port),
+            "-U",
+            db_user,
+            "-F",
+            "c",
+            "-f",
+            str(dump_path),
             db_name,
         ]
         result = subprocess.run(  # noqa: S603
@@ -164,7 +172,7 @@ def discover_databases(instance: Instance) -> list[str]:
     db_host = instance.db_host or "localhost"
     db_port = instance.db_port or 5432
     db_user = instance.db_user or "odoo"
-    db_password = ""
+    db_password = ""  # nosec B105
     if instance.db_password_enc:
         try:
             db_password = decrypt_secret(instance.db_password_enc)
@@ -178,10 +186,15 @@ def discover_databases(instance: Instance) -> list[str]:
     )
     cmd = [
         "psql",
-        "-h", db_host,
-        "-p", str(db_port),
-        "-U", db_user,
-        "-t", "-c", sql,
+        "-h",
+        db_host,
+        "-p",
+        str(db_port),
+        "-U",
+        db_user,
+        "-t",
+        "-c",
+        sql,
         "postgres",
     ]
     result = subprocess.run(  # noqa: S603

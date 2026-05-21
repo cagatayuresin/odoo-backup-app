@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import UTC
+
 import pytest
 
 from app.core.cron import is_valid_cron, next_run_utc, next_runs, validate_cron
@@ -10,11 +12,11 @@ from app.core.cron import is_valid_cron, next_run_utc, next_runs, validate_cron
 def test_valid_cron_expressions() -> None:
     """Standard cron expressions should pass validation."""
     valid = [
-        "0 2 * * *",          # every day at 02:00
-        "*/15 * * * *",       # every 15 minutes
-        "0 0 1 * *",          # monthly
-        "0 9 * * 1",          # every Monday at 09:00
-        "30 6 * * 1-5",       # weekdays at 06:30
+        "0 2 * * *",  # every day at 02:00
+        "*/15 * * * *",  # every 15 minutes
+        "0 0 1 * *",  # monthly
+        "0 9 * * 1",  # every Monday at 09:00
+        "30 6 * * 1-5",  # weekdays at 06:30
     ]
     for expr in valid:
         assert is_valid_cron(expr), f"Expected valid: {expr}"
@@ -25,9 +27,9 @@ def test_invalid_cron_expressions() -> None:
     invalid = [
         "",
         "not a cron",
-        "60 * * * *",   # minute out of range
+        "60 * * * *",  # minute out of range
         "* * * * * *",  # 6 fields
-        "* * * *",      # 4 fields
+        "* * * *",  # 4 fields
     ]
     for expr in invalid:
         assert not is_valid_cron(expr), f"Expected invalid: {expr}"
@@ -49,9 +51,6 @@ def test_next_runs_returns_five_datetimes() -> None:
 
 def test_next_runs_in_target_timezone() -> None:
     """Returned datetimes should be in the requested timezone."""
-    import pytz
-
-    zone = pytz.timezone("Europe/Istanbul")
     runs = next_runs("0 9 * * *", count=3, tz="Europe/Istanbul")
     for dt in runs:
         assert dt.tzinfo is not None
@@ -62,10 +61,9 @@ def test_next_runs_in_target_timezone() -> None:
 
 def test_next_run_utc_returns_utc_datetime() -> None:
     """next_run_utc should return a UTC-aware datetime."""
-    from datetime import timezone
 
     dt = next_run_utc("*/5 * * * *")
-    assert dt.tzinfo == timezone.utc
+    assert dt.tzinfo == UTC
 
 
 def test_next_runs_invalid_expr_raises() -> None:

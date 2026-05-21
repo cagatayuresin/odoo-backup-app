@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytz
 from croniter import CroniterBadCronError, croniter
@@ -10,7 +10,10 @@ from croniter import CroniterBadCronError, croniter
 
 def is_valid_cron(expression: str) -> bool:
     """Return True if *expression* is a valid 5-field cron expression."""
-    return croniter.is_valid(expression)
+    parts = expression.strip().split()
+    if len(parts) != 5:
+        return False
+    return bool(croniter.is_valid(expression))
 
 
 def validate_cron(expression: str) -> None:
@@ -37,7 +40,7 @@ def next_runs(expression: str, count: int = 5, tz: str = "UTC") -> list[datetime
     """
     validate_cron(expression)
     zone = pytz.timezone(tz)
-    base = datetime.now(timezone.utc)
+    base = datetime.now(UTC)
 
     try:
         it = croniter(expression, base)
@@ -56,7 +59,7 @@ def next_runs(expression: str, count: int = 5, tz: str = "UTC") -> list[datetime
 def next_run_utc(expression: str) -> datetime:
     """Return the single next scheduled UTC datetime for *expression*."""
     validate_cron(expression)
-    base = datetime.now(timezone.utc)
+    base = datetime.now(UTC)
     it = croniter(expression, base)
     result: datetime = it.get_next(datetime)
-    return result.replace(tzinfo=timezone.utc)
+    return result.replace(tzinfo=UTC)

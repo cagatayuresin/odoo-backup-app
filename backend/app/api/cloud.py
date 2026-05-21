@@ -26,6 +26,7 @@ router = APIRouter(prefix="/cloud", tags=["cloud"])
 
 # ─── Cloud Accounts ───────────────────────────────────────────────────────────
 
+
 @router.get("/accounts", response_model=list[CloudAccountRead])
 def list_accounts(
     _: User = Depends(require_password_changed),
@@ -105,6 +106,7 @@ def delete_account(
 
 # ─── Instance Cloud Bindings ──────────────────────────────────────────────────
 
+
 @router.get("/instances/{instance_id}/bindings", response_model=list[CloudBindingRead])
 def list_bindings(
     instance_id: int,
@@ -116,9 +118,7 @@ def list_bindings(
     if inst is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Instance not found")
     return (
-        db.query(InstanceCloudBinding)
-        .filter(InstanceCloudBinding.instance_id == instance_id)
-        .all()
+        db.query(InstanceCloudBinding).filter(InstanceCloudBinding.instance_id == instance_id).all()
     )
 
 

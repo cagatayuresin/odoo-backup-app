@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 
 import httpx
@@ -64,9 +64,16 @@ class OneDriveProvider:
                     create_url = f"{_GRAPH}/me/drive/items/{current_id}/children"
                     resp = client.post(
                         create_url,
-                        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+                        headers={
+                            "Authorization": f"Bearer {token}",
+                            "Content-Type": "application/json",
+                        },
                         content=json.dumps(
-                            {"name": part, "folder": {}, "@microsoft.graph.conflictBehavior": "rename"}
+                            {
+                                "name": part,
+                                "folder": {},
+                                "@microsoft.graph.conflictBehavior": "rename",
+                            }
                         ).encode(),
                     )
                     resp.raise_for_status()
@@ -109,7 +116,9 @@ class OneDriveProvider:
                         item_id = put_resp.json().get("id", "")
                     start = end + 1
 
-        logger.info("Uploaded %s to OneDrive folder %s (id=%s)", local_path.name, remote_folder, item_id)
+        logger.info(
+            "Uploaded %s to OneDrive folder %s (id=%s)", local_path.name, remote_folder, item_id
+        )
         return item_id
 
     def list_files(self, remote_folder: str) -> list[RemoteFile]:

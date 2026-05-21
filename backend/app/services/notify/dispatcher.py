@@ -64,22 +64,22 @@ def dispatch(run: BackupRun, db: Session) -> None:
 def _deliver(run: BackupRun, binding: InstanceNotificationBinding, db: Session) -> None:
     """Deliver a notification via the channel specified in *binding*."""
     if binding.channel_type == ChannelType.smtp:
-        channel = db.get(SmtpChannel, binding.channel_id)
-        if channel is None or not channel.enabled:
+        smtp_channel = db.get(SmtpChannel, binding.channel_id)
+        if smtp_channel is None or not smtp_channel.enabled:
             logger.debug("SMTP channel %d not found or disabled — skipping", binding.channel_id)
             return
 
-        to_address = channel.from_address
-        from app.services.notify.smtp import notify_backup_run
+        to_address = smtp_channel.from_address
+        from app.services.notify.smtp import notify_backup_run as smtp_notify
 
-        notify_backup_run(run, channel, to_address)
+        smtp_notify(run, smtp_channel, to_address)
 
     elif binding.channel_type == ChannelType.telegram:
-        channel = db.get(TelegramChannel, binding.channel_id)
-        if channel is None or not channel.enabled:
+        tg_channel = db.get(TelegramChannel, binding.channel_id)
+        if tg_channel is None or not tg_channel.enabled:
             logger.debug("Telegram channel %d not found or disabled — skipping", binding.channel_id)
             return
 
-        from app.services.notify.telegram import notify_backup_run
+        from app.services.notify.telegram import notify_backup_run as telegram_notify
 
-        notify_backup_run(run, channel)
+        telegram_notify(run, tg_channel)

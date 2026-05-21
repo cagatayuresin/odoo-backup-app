@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -11,7 +11,7 @@ from app.db import Base
 
 
 def _utcnow() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 class Job(Base):
@@ -41,5 +41,5 @@ class Job(Base):
     )
 
 
-from app.models.backup import BackupRun  # noqa: E402, F401
-from app.models.instance import Instance  # noqa: E402, F401
+from app.models.backup import BackupRun  # noqa: E402
+from app.models.instance import Instance  # noqa: E402

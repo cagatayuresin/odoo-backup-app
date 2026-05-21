@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import UTC
 from pathlib import Path
 
 from app.services.cloud.base import RemoteFile
@@ -88,7 +88,7 @@ class DropboxProvider:
                         remote_id=entry.id,
                         name=entry.name,
                         size_bytes=entry.size,
-                        modified_at=entry.server_modified.replace(tzinfo=timezone.utc),
+                        modified_at=entry.server_modified.replace(tzinfo=UTC),
                     )
                 )
         return sorted(remote_files, key=lambda f: f.modified_at, reverse=True)

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
@@ -98,7 +98,7 @@ def request_password_reset(
     if user and user.password_reset_enabled and user.recovery_email and user.recovery_channel_id:
         token, token_hash = generate_reset_token()
         user.reset_token_hash = token_hash
-        user.reset_token_expires_at = datetime.now(timezone.utc) + timedelta(minutes=15)
+        user.reset_token_expires_at = datetime.now(UTC) + timedelta(minutes=15)
         db.commit()
 
         # Dispatch reset email (imported here to avoid circular import)
@@ -122,11 +122,11 @@ def reset_password(
     token_hash = hash_token(body.token)
     user = db.query(User).filter(User.reset_token_hash == token_hash).first()
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     if (
         user is None
         or user.reset_token_expires_at is None
-        or user.reset_token_expires_at.replace(tzinfo=timezone.utc) < now
+        or user.reset_token_expires_at.replace(tzinfo=UTC) < now
     ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

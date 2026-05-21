@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import zipfile
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import httpx
@@ -21,7 +21,7 @@ _TIMEOUT = httpx.Timeout(connect=30.0, read=3600.0, write=30.0, pool=5.0)
 
 def _backup_path(instance: Instance, db_name: str) -> Path:
     """Compute the destination path for a backup file."""
-    ts = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+    ts = datetime.now(UTC).strftime("%Y%m%d-%H%M%S")
     dest_dir = settings.backups_dir / instance.slug
     dest_dir.mkdir(parents=True, exist_ok=True)
     return dest_dir / f"{ts}_{db_name}.zip"
@@ -46,8 +46,9 @@ def run(instance: Instance, db_name: str) -> BackupResult:
     dest = _backup_path(instance, db_name)
 
     try:
-        with httpx.Client(timeout=_TIMEOUT, verify=True) as client:
-            with client.stream(
+        with (
+            httpx.Client(timeout=_TIMEOUT, verify=True) as client,
+            client.stream(
                 "POST",
                 url,
                 data={
@@ -55,11 +56,12 @@ def run(instance: Instance, db_name: str) -> BackupResult:
                     "name": db_name,
                     "backup_format": "zip",
                 },
-            ) as resp:
-                resp.raise_for_status()
-                with dest.open("wb") as fh:
-                    for chunk in resp.iter_bytes(chunk_size=65536):
-                        fh.write(chunk)
+            ) as resp,
+        ):
+            resp.raise_for_status()
+            with dest.open("wb") as fh:
+                for chunk in resp.iter_bytes(chunk_size=65536):
+                    fh.write(chunk)
     except httpx.HTTPStatusError as exc:
         dest.unlink(missing_ok=True)
         return BackupResult(

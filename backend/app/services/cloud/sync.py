@@ -21,17 +21,17 @@ def _build_provider(account: CloudAccount) -> object:
     credentials_json = decrypt_secret(account.credentials_enc)
 
     if account.provider == CloudProvider.gdrive:
-        from app.services.cloud.drive import build_provider
+        from app.services.cloud.drive import build_provider as drive_build
 
-        return build_provider(credentials_json)
+        return drive_build(credentials_json)
     if account.provider == CloudProvider.dropbox:
-        from app.services.cloud.dropbox_provider import build_provider
+        from app.services.cloud.dropbox_provider import build_provider as dropbox_build
 
-        return build_provider(credentials_json)
+        return dropbox_build(credentials_json)
     if account.provider == CloudProvider.onedrive:
-        from app.services.cloud.onedrive import build_provider
+        from app.services.cloud.onedrive import build_provider as onedrive_build
 
-        return build_provider(credentials_json)
+        return onedrive_build(credentials_json)
 
     msg = f"Unknown cloud provider: {account.provider}"
     raise ValueError(msg)
@@ -102,7 +102,7 @@ def _apply_remote_retention(
     run_pairs = [(f.remote_id, f.modified_at) for f in files_oldest_first]
 
     deletions, safety_triggered = compute_deletions(
-        run_pairs,  # type: ignore[arg-type]
+        run_pairs,
         instance.retention_mode.value,
         instance.retention_value,
     )

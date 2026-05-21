@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 
 from app.services.cloud.base import RemoteFile
@@ -20,10 +20,10 @@ class GoogleDriveProvider:
         import google.oauth2.credentials
         from googleapiclient.discovery import build
 
-        creds = google.oauth2.credentials.Credentials(
+        creds = google.oauth2.credentials.Credentials(  # type: ignore[no-untyped-call]
             token=credentials.get("token"),
             refresh_token=credentials.get("refresh_token"),
-            token_uri="https://oauth2.googleapis.com/token",
+            token_uri="https://oauth2.googleapis.com/token",  # noqa: S106  # nosec B106
             client_id=credentials.get("client_id"),
             client_secret=credentials.get("client_secret"),
             scopes=["https://www.googleapis.com/auth/drive.file"],
@@ -36,11 +36,7 @@ class GoogleDriveProvider:
             f"name='{folder_name}' and mimeType='application/vnd.google-apps.folder'"
             " and trashed=false"
         )
-        results = (
-            self._service.files()  # type: ignore[attr-defined]
-            .list(q=q, fields="files(id)", pageSize=1)
-            .execute()
-        )
+        results = self._service.files().list(q=q, fields="files(id)", pageSize=1).execute()
         files: list[dict[str, str]] = results.get("files", [])
         if files:
             return files[0]["id"]
@@ -49,11 +45,7 @@ class GoogleDriveProvider:
             "name": folder_name,
             "mimeType": "application/vnd.google-apps.folder",
         }
-        folder = (
-            self._service.files()  # type: ignore[attr-defined]
-            .create(body=metadata, fields="id")
-            .execute()
-        )
+        folder = self._service.files().create(body=metadata, fields="id").execute()
         return folder["id"]  # type: ignore[no-any-return]
 
     def upload(self, local_path: Path, remote_folder: str) -> str:
@@ -64,12 +56,12 @@ class GoogleDriveProvider:
         media = MediaFileUpload(str(local_path), resumable=True)
         metadata = {"name": local_path.name, "parents": [folder_id]}
         result = (
-            self._service.files()  # type: ignore[attr-defined]
-            .create(body=metadata, media_body=media, fields="id")
-            .execute()
+            self._service.files().create(body=metadata, media_body=media, fields="id").execute()
         )
         file_id: str = result["id"]
-        logger.info("Uploaded %s to Google Drive folder %s (id=%s)", local_path.name, remote_folder, file_id)
+        logger.info(
+            "Uploaded %s to Google Drive folder %s (id=%s)", local_path.name, remote_folder, file_id
+        )
         return file_id
 
     def list_files(self, remote_folder: str) -> list[RemoteFile]:
@@ -77,7 +69,7 @@ class GoogleDriveProvider:
         folder_id = self._get_or_create_folder(remote_folder.lstrip("/"))
         q = f"'{folder_id}' in parents and trashed=false"
         results = (
-            self._service.files()  # type: ignore[attr-defined]
+            self._service.files()
             .list(
                 q=q,
                 fields="files(id,name,size,modifiedTime)",
@@ -93,16 +85,14 @@ class GoogleDriveProvider:
                     remote_id=f["id"],
                     name=f["name"],
                     size_bytes=int(f.get("size", 0)),
-                    modified_at=datetime.fromisoformat(
-                        f["modifiedTime"].replace("Z", "+00:00")
-                    ),
+                    modified_at=datetime.fromisoformat(f["modifiedTime"].replace("Z", "+00:00")),
                 )
             )
         return remote_files
 
     def delete_file(self, remote_id: str) -> None:
         """Delete a Drive file by ID."""
-        self._service.files().delete(fileId=remote_id).execute()  # type: ignore[attr-defined]
+        self._service.files().delete(fileId=remote_id).execute()
         logger.info("Deleted Google Drive file %s", remote_id)
 
 

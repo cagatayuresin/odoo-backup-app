@@ -82,20 +82,20 @@ def parse_instance_url(raw: str) -> ParsedInstance:
     raw = raw.strip().rstrip("/")
 
     # Inject a scheme so urllib can parse the netloc
-    if "://" not in raw:
-        raw_with_scheme = "placeholder://" + raw
-    else:
-        raw_with_scheme = raw
+    raw_with_scheme = raw if "://" in raw else "placeholder://" + raw
 
     parsed = urlparse(raw_with_scheme)
     host = parsed.hostname or ""
     explicit_port: int | None = parsed.port
-    explicit_scheme: str | None = (
-        parsed.scheme if "://" in (raw if "://" in raw else "") else None
-    )
+    explicit_scheme: str | None = parsed.scheme if "://" in (raw if "://" in raw else "") else None
 
     if not _is_valid_host(host):
         msg = f"Cannot parse a valid host from: {raw!r}"
+        raise ValueError(msg)
+
+    # Reject any scheme that is not http or https
+    if explicit_scheme is not None and explicit_scheme not in {"http", "https"}:
+        msg = f"Unsupported URL scheme {explicit_scheme!r} — only http and https are accepted"
         raise ValueError(msg)
 
     # Determine scheme
@@ -103,10 +103,7 @@ def parse_instance_url(raw: str) -> ParsedInstance:
         scheme = explicit_scheme
     elif _is_ip(host):
         # Raw IP: use http if a non-443 explicit port given, otherwise https
-        if explicit_port is not None and explicit_port != 443:
-            scheme = "http"
-        else:
-            scheme = "https"
+        scheme = "http" if explicit_port is not None and explicit_port != 443 else "https"
     else:
         # Hostname without scheme → assume https (reverse proxy)
         scheme = "https"
@@ -120,7 +117,7 @@ def parse_instance_url(raw: str) -> ParsedInstance:
         port = 80
 
     if not (1 <= port <= 65535):
-        msg = f"Port {port} is out of valid range (1–65535)"
+        msg = f"Port {port} is out of valid range (1-65535)"
         raise ValueError(msg)
 
     return ParsedInstance(scheme=scheme, host=host, port=port)

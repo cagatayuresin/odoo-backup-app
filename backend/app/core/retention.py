@@ -15,7 +15,7 @@ that bypasses the safety net and is gated in the API behind a typed confirmation
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +52,7 @@ def compute_deletions_keep_last_n(
     # Would we be deleting everything?
     if to_delete_count >= total:
         logger.warning(
-            "Retention keep_last_%d would delete all %d backups — skipping to preserve the most recent.",
+            "Retention keep_last_%d would delete all %d backups — skipping to preserve the most recent.",  # noqa: E501
             keep_n,
             total,
         )
@@ -79,13 +79,13 @@ def compute_deletions_older_than_days(
         msg = "max_age_days must be a positive integer"
         raise ValueError(msg)
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     cutoff = now - timedelta(days=max_age_days)
 
     candidates = [
         run_id
         for run_id, started_at in run_ids_oldest_first
-        if started_at.replace(tzinfo=timezone.utc) < cutoff
+        if started_at.replace(tzinfo=UTC) < cutoff
     ]
 
     if not candidates:
@@ -94,7 +94,7 @@ def compute_deletions_older_than_days(
     # Safety net: if ALL backups are older than the cutoff, preserve the most recent one
     if len(candidates) >= len(run_ids_oldest_first):
         logger.warning(
-            "Retention older_than_%d_days would delete all %d backups — skipping to preserve the most recent.",
+            "Retention older_than_%d_days would delete all %d backups — skipping to preserve the most recent.",  # noqa: E501
             max_age_days,
             len(run_ids_oldest_first),
         )
@@ -128,12 +128,9 @@ def compute_deletions(
         safety_triggered = total > value and len(deletions) == 0
     elif mode == "older_than_days":
         deletions = compute_deletions_older_than_days(run_ids_oldest_first, value)
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         cutoff = now - timedelta(days=value)
-        all_old = all(
-            started.replace(tzinfo=timezone.utc) < cutoff
-            for _, started in run_ids_oldest_first
-        )
+        all_old = all(started.replace(tzinfo=UTC) < cutoff for _, started in run_ids_oldest_first)
         safety_triggered = bool(run_ids_oldest_first) and all_old and len(deletions) == 0
     else:
         msg = f"Unknown retention mode: {mode!r}"

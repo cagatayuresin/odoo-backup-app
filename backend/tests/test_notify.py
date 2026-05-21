@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import MagicMock, patch
-
-import pytest
 
 
 def _make_run(status: str = "success") -> MagicMock:
@@ -16,8 +14,8 @@ def _make_run(status: str = "success") -> MagicMock:
     run.id = 1
     run.instance_id = 1
     run.db_name = "mydb"
-    run.started_at = datetime(2026, 5, 21, 10, 0, 0, tzinfo=timezone.utc)
-    run.finished_at = datetime(2026, 5, 21, 10, 1, 30, tzinfo=timezone.utc)
+    run.started_at = datetime(2026, 5, 21, 10, 0, 0, tzinfo=UTC)
+    run.finished_at = datetime(2026, 5, 21, 10, 1, 30, tzinfo=UTC)
     run.status = BackupStatus(status)
     run.verification_status = VerificationStatus.passed
     run.file_size_bytes = 1024 * 1024

@@ -6,8 +6,6 @@ import zipfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 
 def _make_instance(
     slug: str = "test-instance",

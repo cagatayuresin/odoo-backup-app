@@ -14,7 +14,7 @@ from celery import shared_task
 logger = logging.getLogger(__name__)
 
 
-@shared_task(name="app.tasks.scheduler.refresh_schedules")
+@shared_task(name="app.tasks.scheduler.refresh_schedules")  # type: ignore[untyped-decorator]
 def refresh_schedules() -> dict[str, object]:
     """Synchronise redbeat entries with the current set of enabled jobs.
 
@@ -51,7 +51,7 @@ def refresh_schedules() -> dict[str, object]:
                     )
                     existing.delete()
                 except Exception:
-                    pass
+                    logger.debug("No existing redbeat entry for %s", entry_key)
         except Exception:
             logger.exception("Failed to sync schedule for job %d", job.id)
 
@@ -64,7 +64,7 @@ def _cron_schedule(expression: str) -> object:
     from celery.schedules import crontab
 
     parts = expression.split()
-    if len(parts) != 5:  # noqa: PLR2004
+    if len(parts) != 5:
         msg = f"Expected 5-field cron, got: {expression!r}"
         raise ValueError(msg)
     minute, hour, day_of_month, month_of_year, day_of_week = parts
@@ -84,8 +84,8 @@ def bootstrap_beat_schedule() -> None:
     refresh task even before the first UI interaction.
     """
     try:
-        from redbeat import RedBeatSchedulerEntry
         from celery.schedules import crontab
+        from redbeat import RedBeatSchedulerEntry
 
         from app.tasks.celery_app import celery_app
 
@@ -98,4 +98,7 @@ def bootstrap_beat_schedule() -> None:
         entry.save()
         logger.info("Beat schedule refresh entry registered")
     except Exception:
-        logger.warning("Could not register beat schedule refresh (Redis may not be running)", exc_info=True)
+        logger.warning(
+            "Could not register beat schedule refresh (Redis may not be running)",
+            exc_info=True,
+        )

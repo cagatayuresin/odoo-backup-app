@@ -10,8 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.core.security import hash_password
-from app.db import SessionLocal, engine
-from app.models import Base
+from app.db import Base, SessionLocal, engine
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +24,7 @@ def _ensure_directories() -> None:
 
 def _run_migrations() -> None:
     """Run Alembic migrations to bring the schema up to date."""
-    result = subprocess.run(  # noqa: S603
+    result = subprocess.run(
         [sys.executable, "-m", "alembic", "upgrade", "head"],
         capture_output=True,
         text=True,

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from celery import shared_task
 
@@ -20,11 +20,12 @@ def _get_db_names(instance: Instance) -> list[str]:
     from app.models.instance import BackupMethod
 
     if instance.db_selection_mode == DbSelectionMode.single:
-        names_raw = json.loads(instance.db_names or "[]")
+        names_raw: list[str] = json.loads(instance.db_names or "[]")
         return [names_raw[0]] if names_raw else []
 
     if instance.db_selection_mode == DbSelectionMode.selected:
-        return json.loads(instance.db_names or "[]")
+        selected: list[str] = json.loads(instance.db_names or "[]")
+        return selected
 
     # all — discover
     if instance.backup_method == BackupMethod.odoo_endpoint:
@@ -37,7 +38,7 @@ def _get_db_names(instance: Instance) -> list[str]:
         return pg_dump.discover_databases(instance)
 
 
-@shared_task(bind=True, name="app.tasks.backup_tasks.run_backup_job", max_retries=2)
+@shared_task(bind=True, name="app.tasks.backup_tasks.run_backup_job", max_retries=2)  # type: ignore[untyped-decorator]
 def run_backup_job(self: object, job_id: int) -> dict[str, object]:
     """Execute all database backups for the given job."""
     from app.models.job import Job
@@ -63,7 +64,7 @@ def run_backup_job(self: object, job_id: int) -> dict[str, object]:
             run = BackupRun(
                 job_id=job_id,
                 instance_id=instance.id,
-                started_at=datetime.now(timezone.utc),
+                started_at=datetime.now(UTC),
                 status=BackupStatus.running,
                 db_name=db_name,
             )
@@ -75,7 +76,7 @@ def run_backup_job(self: object, job_id: int) -> dict[str, object]:
             _execute_single_backup.delay(run.id)
 
         # Update job timestamps
-        job.last_run_at = datetime.now(timezone.utc)
+        job.last_run_at = datetime.now(UTC)
         from app.core.cron import next_run_utc
 
         job.next_run_at = next_run_utc(job.cron_expression)
@@ -84,7 +85,7 @@ def run_backup_job(self: object, job_id: int) -> dict[str, object]:
     return {"status": "enqueued", "run_ids": run_ids}
 
 
-@shared_task(bind=True, name="app.tasks.backup_tasks.execute_single_backup", max_retries=1)
+@shared_task(bind=True, name="app.tasks.backup_tasks.execute_single_backup", max_retries=1)  # type: ignore[untyped-decorator]
 def _execute_single_backup(self: object, run_id: int) -> dict[str, object]:
     """Run a single database backup and update the BackupRun record."""
     from app.models.instance import BackupMethod
@@ -98,7 +99,7 @@ def _execute_single_backup(self: object, run_id: int) -> dict[str, object]:
         if instance is None:
             run.status = BackupStatus.failed
             run.error_message = "Instance not found"
-            run.finished_at = datetime.now(timezone.utc)
+            run.finished_at = datetime.now(UTC)
             db.commit()
             return {"status": "failed"}
 
@@ -110,7 +111,7 @@ def _execute_single_backup(self: object, run_id: int) -> dict[str, object]:
 
         result = do_backup(instance, run.db_name)
 
-        run.finished_at = datetime.now(timezone.utc)
+        run.finished_at = datetime.now(UTC)
         if result.success and result.file_path:
             run.file_path = str(result.file_path)
             run.file_size_bytes = result.file_size_bytes
@@ -133,7 +134,7 @@ def _execute_single_backup(self: object, run_id: int) -> dict[str, object]:
     return {"status": "success", "run_id": run_id}
 
 
-@shared_task(name="app.tasks.backup_tasks.verify_backup_run")
+@shared_task(name="app.tasks.backup_tasks.verify_backup_run")  # type: ignore[untyped-decorator]
 def verify_backup_run(run_id: int) -> dict[str, object]:
     """Verify the integrity of a backup file and update the run record."""
     with SessionLocal() as db:
@@ -175,7 +176,7 @@ def verify_backup_run(run_id: int) -> dict[str, object]:
     return {"status": "verified" if passed else "verify_failed"}
 
 
-@shared_task(name="app.tasks.backup_tasks.apply_retention")
+@shared_task(name="app.tasks.backup_tasks.apply_retention")  # type: ignore[untyped-decorator]
 def apply_retention(run_id: int) -> dict[str, object]:
     """Apply the instance's retention policy after a backup completes."""
     with SessionLocal() as db:
@@ -187,13 +188,13 @@ def apply_retention(run_id: int) -> dict[str, object]:
         if instance is None:
             return {"status": "skipped"}
 
-        from app.models.backup import BackupStatus as BS
+        from app.models.backup import BackupStatus
 
         all_runs = (
             db.query(BackupRun)
             .filter(
                 BackupRun.instance_id == instance.id,
-                BackupRun.status.in_([BS.success, BS.verified]),
+                BackupRun.status.in_([BackupStatus.success, BackupStatus.verified]),
             )
             .order_by(BackupRun.started_at.asc())
             .all()
@@ -220,13 +221,14 @@ def apply_retention(run_id: int) -> dict[str, object]:
                 AuditLog(
                     actor="system",
                     event="retention_safety_net",
-                    details=json.dumps({"instance_id": instance.id, "instance_slug": instance.slug}),
+                    details=json.dumps(
+                        {"instance_id": instance.id, "instance_slug": instance.slug}
+                    ),
                 )
             )
             db.commit()
             return {"status": "safety_net_triggered"}
 
-        import os
         from pathlib import Path
 
         for run_id_to_delete in deletions:

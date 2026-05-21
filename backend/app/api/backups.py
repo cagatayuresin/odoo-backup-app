@@ -58,7 +58,9 @@ def download_backup(
     if run is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Backup not found")
     if not run.file_path or not Path(run.file_path).is_file():
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Backup file not found on disk")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Backup file not found on disk"
+        )
 
     return FileResponse(
         path=run.file_path,

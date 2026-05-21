@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import enum
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+from enum import StrEnum
 
 from sqlalchemy import Boolean, DateTime, Enum, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -12,17 +12,17 @@ from app.db import Base
 
 
 def _utcnow() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
-class BackupMethod(str, enum.Enum):
+class BackupMethod(StrEnum):
     """Strategy for backing up this instance."""
 
     odoo_endpoint = "odoo_endpoint"
     pg_dump = "pg_dump"
 
 
-class DbSelectionMode(str, enum.Enum):
+class DbSelectionMode(StrEnum):
     """Which databases to back up."""
 
     single = "single"
@@ -30,7 +30,7 @@ class DbSelectionMode(str, enum.Enum):
     all = "all"
 
 
-class RetentionMode(str, enum.Enum):
+class RetentionMode(StrEnum):
     """How to expire old backups."""
 
     keep_last_n = "keep_last_n"
@@ -106,7 +106,7 @@ class Instance(Base):
     )
 
 
-from app.models.backup import BackupRun  # noqa: E402, F401
-from app.models.cloud import InstanceCloudBinding  # noqa: E402, F401
-from app.models.job import Job  # noqa: E402, F401
-from app.models.notify import InstanceNotificationBinding  # noqa: E402, F401
+from app.models.backup import BackupRun  # noqa: E402
+from app.models.cloud import InstanceCloudBinding  # noqa: E402
+from app.models.job import Job  # noqa: E402
+from app.models.notify import InstanceNotificationBinding  # noqa: E402

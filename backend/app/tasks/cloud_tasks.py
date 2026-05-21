@@ -11,7 +11,7 @@ from app.db import SessionLocal
 logger = logging.getLogger(__name__)
 
 
-@shared_task(name="app.tasks.cloud_tasks.sync_backup_to_cloud")
+@shared_task(name="app.tasks.cloud_tasks.sync_backup_to_cloud")  # type: ignore[untyped-decorator]
 def sync_backup_to_cloud(run_id: int) -> dict[str, object]:
     """Upload a backup run to all configured cloud destinations."""
     with SessionLocal() as db:

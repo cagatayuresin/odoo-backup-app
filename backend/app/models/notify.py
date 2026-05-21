@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import enum
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+from enum import StrEnum
 
 from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -12,10 +12,10 @@ from app.db import Base
 
 
 def _utcnow() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
-class ChannelType(str, enum.Enum):
+class ChannelType(StrEnum):
     """Discriminator for the polymorphic notification binding."""
 
     smtp = "smtp"
@@ -77,9 +77,7 @@ class InstanceNotificationBinding(Base):
     on_success: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     on_failure: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
-    instance: Mapped[Instance] = relationship(
-        "Instance", back_populates="notification_bindings"
-    )
+    instance: Mapped[Instance] = relationship("Instance", back_populates="notification_bindings")
 
 
-from app.models.instance import Instance  # noqa: E402, F401
+from app.models.instance import Instance  # noqa: E402

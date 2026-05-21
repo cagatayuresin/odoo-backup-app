@@ -75,15 +75,15 @@ def _render_backup_email(run: BackupRun) -> str:
           </tr>
           <tr>
             <td style="padding:8px;border-bottom:1px solid #E5E7EB;font-weight:600;">Started</td>
-            <td style="padding:8px;border-bottom:1px solid #E5E7EB;">{run.started_at.strftime('%Y-%m-%d %H:%M:%S UTC')}</td>
+            <td style="padding:8px;border-bottom:1px solid #E5E7EB;">{run.started_at.strftime("%Y-%m-%d %H:%M:%S UTC")}</td>
           </tr>
           <tr>
             <td style="padding:8px;border-bottom:1px solid #E5E7EB;font-weight:600;">Duration</td>
-            <td style="padding:8px;border-bottom:1px solid #E5E7EB;">{duration_str or 'N/A'}</td>
+            <td style="padding:8px;border-bottom:1px solid #E5E7EB;">{duration_str or "N/A"}</td>
           </tr>
           <tr>
             <td style="padding:8px;border-bottom:1px solid #E5E7EB;font-weight:600;">File Size</td>
-            <td style="padding:8px;border-bottom:1px solid #E5E7EB;">{size_str or 'N/A'}</td>
+            <td style="padding:8px;border-bottom:1px solid #E5E7EB;">{size_str or "N/A"}</td>
           </tr>
           <tr>
             <td style="padding:8px;border-bottom:1px solid #E5E7EB;font-weight:600;">Verification</td>
@@ -116,17 +116,16 @@ async def _send_async(
     msg["To"] = to_address
     msg.attach(MIMEText(html_body, "html", "utf-8"))
 
-    kwargs: dict[str, object] = {
-        "hostname": channel.host,
-        "port": channel.port,
-        "username": channel.username,
-        "password": password,
-        "use_tls": channel.use_ssl,
-        "start_tls": channel.use_tls,
-        "timeout": 30,
-    }
-
-    await aiosmtplib.send(msg, **kwargs)
+    await aiosmtplib.send(
+        msg,
+        hostname=channel.host,
+        port=channel.port,
+        username=channel.username,
+        password=password,
+        use_tls=channel.use_ssl,
+        start_tls=channel.use_tls,
+        timeout=30,
+    )
 
 
 def _send_sync(channel: SmtpChannel, to_address: str, subject: str, html_body: str) -> None:
@@ -169,7 +168,9 @@ def send_password_reset_email(user: User, token: str, db: Session) -> None:
     from app.models.notify import SmtpChannel as SmtpChannelModel
 
     if not user.recovery_channel_id or not user.recovery_email:
-        logger.warning("Password reset requested but recovery not configured for user %s", user.username)
+        logger.warning(
+            "Password reset requested but recovery not configured for user %s", user.username
+        )
         return
 
     channel = db.get(SmtpChannelModel, user.recovery_channel_id)

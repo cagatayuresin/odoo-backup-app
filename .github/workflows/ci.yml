@@ -61,7 +61,7 @@ jobs:
     env:
       OB_REDIS_URL: redis://localhost:6379/0
       OB_SECRET_KEY: ci-test-secret-key-do-not-use-in-production
-      OB_DATABASE_URL: sqlite+aiosqlite:///./test.db
+      OB_DATA_DIR: /tmp/ob-ci-test-data
 
     steps:
       - uses: actions/checkout@v4
