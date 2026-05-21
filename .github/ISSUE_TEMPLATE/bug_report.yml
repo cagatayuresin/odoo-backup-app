@@ -1,0 +1,82 @@
+name: Bug Report
+description: Report a bug or unexpected behavior
+labels: [bug, needs-triage]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. Please fill in as much detail as possible.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the bug
+      description: A clear and concise description of what the bug is.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Steps to reproduce the behavior.
+      placeholder: |
+        1. Go to '...'
+        2. Click on '...'
+        3. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: |
+        Paste any relevant log output. Run `docker compose logs web worker beat` to collect logs.
+        **Remove any credentials or secrets before pasting.**
+      render: shell
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Output of `docker inspect ghcr.io/cagatayuresin/odoo-backup-app --format '{{ .Config.Labels }}'` or the image tag you are running.
+      placeholder: "v1.2.3 or sha-abc1234"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: deployment
+    attributes:
+      label: Deployment method
+      options:
+        - docker compose (recommended)
+        - bare metal / manual
+        - other
+    validations:
+      required: true
+
+  - type: input
+    id: odoo_version
+    attributes:
+      label: Odoo version (if relevant)
+      placeholder: "17.0 Community"
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I have searched existing issues and this is not a duplicate.
+          required: true
+        - label: I have removed all credentials and secrets from the logs above.
+          required: true

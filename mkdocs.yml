@@ -1,0 +1,54 @@
+site_name: Odoo Backup Orchestrator
+site_description: Self-hosted backup orchestration for one or many Odoo instances — scheduled, audited, notified, and cloud-synced.
+site_url: https://cagatayuresin.github.io/odoo-backup-app/
+repo_url: https://github.com/cagatayuresin/odoo-backup-app
+repo_name: cagatayuresin/odoo-backup-app
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: custom
+      accent: custom
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.highlight
+    - content.code.copy
+  icon:
+    repo: fontawesome/brands/github
+
+extra_css:
+  - assets/extra.css
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Installation: installation.md
+    - First Run: first-run.md
+  - User Guide:
+    - Jobs & Scheduling: jobs.md
+    - Notifications: notifications.md
+    - Cloud Sync: cloud-sync.md
+    - Retention Policy: retention.md
+  - Reference:
+    - Security: security.md
+    - Architecture: architecture.md
+    - FAQ: faq.md

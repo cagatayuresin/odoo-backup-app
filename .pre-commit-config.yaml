@@ -1,0 +1,75 @@
+repos:
+  # General file hygiene
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: "^docs/"
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-added-large-files
+        args: ["--maxkb=500"]
+      - id: check-merge-conflict
+      - id: detect-private-key
+
+  # Ruff — lint + format (Python)
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.4.7
+    hooks:
+      - id: ruff
+        args: ["--fix"]
+        files: "^backend/"
+      - id: ruff-format
+        files: "^backend/"
+
+  # mypy — type checking
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.10.0
+    hooks:
+      - id: mypy
+        files: "^backend/app/"
+        args: ["--config-file", "backend/pyproject.toml"]
+        additional_dependencies:
+          - pydantic>=2.7.0
+          - sqlalchemy>=2.0.30
+          - types-pytz
+
+  # Bandit — security
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.9
+    hooks:
+      - id: bandit
+        args: ["-c", "backend/pyproject.toml"]
+        files: "^backend/app/"
+
+  # Hadolint — Dockerfile linting
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.12.0
+    hooks:
+      - id: hadolint-docker
+        files: "Dockerfile"
+
+  # pip-audit — dependency vulnerability scan (pre-push only)
+  - repo: https://github.com/pypa/pip-audit
+    rev: v2.7.3
+    hooks:
+      - id: pip-audit
+        args: ["-r", "backend/requirements.in", "--skip-editable"]
+        stages: [push]
+
+  # ESLint + Prettier (frontend)
+  - repo: local
+    hooks:
+      - id: eslint
+        name: ESLint (frontend)
+        language: node
+        entry: bash -c "cd frontend && npx eslint --fix src/"
+        files: "^frontend/src/.*\\.(ts|vue|js)$"
+        pass_filenames: false
+      - id: prettier
+        name: Prettier (frontend)
+        language: node
+        entry: bash -c "cd frontend && npx prettier --write src/"
+        files: "^frontend/src/.*\\.(ts|vue|js|css|scss)$"
+        pass_filenames: false

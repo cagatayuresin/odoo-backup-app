@@ -1,0 +1,55 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+
+# Node / frontend build
+node_modules/
+frontend/dist/
+
+# App data
+data/
+*.sqlite
+*.sqlite-journal
+*.db
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor / tooling
+.vscode/
+.idea/
+.claude/
+.cursor/
+
+# Agent notes (intentionally untracked)
+artifacts.md
+
+# Logs
+*.log
+logs/
+
+# Coverage / tests
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# pip-tools
+*.txt.bak
+
+# Alembic
+alembic.ini.bak
+
+# Docker
+*.tar
+
+# MkDocs build
+site/

@@ -1,0 +1,70 @@
+version: "3.9"
+
+# Development override — bind-mounts source for hot reload
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+
+services:
+
+  web:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      target: runtime  # skip frontend build stage; Vite dev server handles it
+    volumes:
+      - ./backend/app:/app/app
+      - ./data:/data
+    command: >
+      uvicorn app.main:app
+      --host 0.0.0.0
+      --port 8080
+      --reload
+      --reload-dir /app/app
+    environment:
+      OB_LOG_LEVEL: DEBUG
+      OB_ROLE: web
+    ports:
+      - "8080:8080"
+
+  worker:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      target: runtime
+    volumes:
+      - ./backend/app:/app/app
+      - ./data:/data
+    environment:
+      OB_LOG_LEVEL: DEBUG
+      OB_ROLE: worker
+    command: >
+      celery -A app.tasks.celery_app worker
+      --loglevel=DEBUG
+      --concurrency=2
+      --queues=default,backups,notifications,cloud
+      --autoreload
+
+  beat:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      target: runtime
+    volumes:
+      - ./backend/app:/app/app
+      - ./data:/data
+    environment:
+      OB_LOG_LEVEL: DEBUG
+      OB_ROLE: beat
+
+  # Vite dev server for the frontend (HMR)
+  frontend:
+    image: node:20.15.0-alpine3.20
+    container_name: odoo-backup-frontend-dev
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: sh -c "npm ci && npm run dev -- --host 0.0.0.0"
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_BASE: http://localhost:8080

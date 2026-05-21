@@ -1,0 +1,53 @@
+# Version control
+.git/
+.gitignore
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# Node modules (rebuilt inside Docker)
+node_modules/
+
+# Tests and docs
+backend/tests/
+docs/
+*.md
+!backend/README.md
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+.claude/
+.cursor/
+
+# Local data
+data/
+*.sqlite
+*.db
+*.log
+
+# CI/CD
+.github/
+
+# Pre-commit
+.pre-commit-config.yaml
+
+# Dev overrides
+docker-compose.dev.yml
+docker-compose.*.yml
+!docker-compose.yml
+
+# Agent notes
+artifacts.md
+
+# MkDocs build
+site/

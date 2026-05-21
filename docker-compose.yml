@@ -1,0 +1,109 @@
+version: "3.9"
+
+# ─── Named volumes ────────────────────────────────────────────────────────────
+volumes:
+  redis_data:
+    driver: local
+  app_data:
+    driver: local
+
+# ─── Shared environment ───────────────────────────────────────────────────────
+x-app-env: &app-env
+  OB_DATA_DIR: /data
+  REDIS_URL: redis://redis:6379/0
+  OB_LOG_LEVEL: ${OB_LOG_LEVEL:-INFO}
+  # Generate strong random values for production; these are fallback defaults
+  OB_SECRET_KEY: ${OB_SECRET_KEY:-change-me-in-production-32chars!!}
+  OB_SESSION_SECRET: ${OB_SESSION_SECRET:-change-me-session-secret-32chars}
+
+# ─── Shared image reference ───────────────────────────────────────────────────
+x-app-image: &app-image
+  build:
+    context: .
+    dockerfile: backend/Dockerfile
+  image: odoo-backup-app:latest
+  volumes:
+    - app_data:/data
+  restart: unless-stopped
+  depends_on:
+    redis:
+      condition: service_healthy
+
+# ─── Services ─────────────────────────────────────────────────────────────────
+services:
+
+  web:
+    <<: *app-image
+    container_name: odoo-backup-web
+    environment:
+      <<: *app-env
+      OB_ROLE: web
+    ports:
+      - "${OB_PORT:-8080}:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    # Resource hints — tune to your host
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: "1.0"
+    #       memory: 512M
+
+  worker:
+    <<: *app-image
+    container_name: odoo-backup-worker
+    environment:
+      <<: *app-env
+      OB_ROLE: worker
+    command: >
+      celery -A app.tasks.celery_app worker
+      --loglevel=${OB_LOG_LEVEL:-INFO}
+      --concurrency=4
+      --queues=default,backups,notifications,cloud
+    healthcheck:
+      test: ["CMD", "celery", "-A", "app.tasks.celery_app", "inspect", "ping", "-d", "celery@$$HOSTNAME"]
+      interval: 30s
+      timeout: 15s
+      retries: 3
+      start_period: 30s
+
+  beat:
+    <<: *app-image
+    container_name: odoo-backup-beat
+    environment:
+      <<: *app-env
+      OB_ROLE: beat
+    command: >
+      celery -A app.tasks.celery_app beat
+      --loglevel=${OB_LOG_LEVEL:-INFO}
+      --scheduler=redbeat.RedBeatScheduler
+    healthcheck:
+      test: ["CMD", "python", "-c", "import redis; r=redis.from_url('redis://redis:6379/0'); r.ping()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  redis:
+    image: redis:7.2.5-alpine
+    container_name: odoo-backup-redis
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    # Resource hints
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: "0.5"
+    #       memory: 300M
